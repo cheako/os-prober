@@ -30,6 +30,25 @@ on_sataraid () {
 }
 
 partitions () {
+	_partitions "$@" |
+	while read part; do
+		uuid=$(blkid -o value -s UUID $part)
+		type=$(fs_type $part)
+		if [ "$uuid" ]; then
+			if echo "$vols" | grep -q "$uuid $type"; then
+				if [ "$type" = "btrfs" ]; then
+					continue
+				else
+					warn "Duplicate UUID unexpected on $part"
+				fi
+			fi
+			vols="$vols $uuid $type"
+		fi
+		echo $part
+	done
+}
+
+_partitions () {
 	os_name="$(uname -s)"
 	# Exclude partitions that have whole_disk sysfs attribute set.
 	if [ -d /sys/block ]; then
