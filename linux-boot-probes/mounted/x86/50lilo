@@ -7,6 +7,7 @@ bootpart="$2"
 mpoint="$3"
 type="$4"
 subvolid="$5"
+bootsubvolid="$6"
 
 found_item=0
 
@@ -49,7 +50,7 @@ recordstanza () {
 				parameters="root=$rootdev $parameters"
 			fi
 			parameters="${parameters% }"
-			result "$rootpart:$bootpart:$title:$kernel:$initrd:$parameters${subvolid:+ rootflags=subvolid=$subvolid}"
+			result "$rootpart:$bootpart${bootsubvolid:+@$bootsubvolid}:$title:$kernel:$initrd:$parameters${subvolid:+ rootflags=subvolid=$subvolid}"
 			found_item=1
 		else
 			debug "cannot find $kernel or $initrd, not recording"

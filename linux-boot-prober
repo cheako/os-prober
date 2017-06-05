@@ -36,19 +36,21 @@ else
 	mpoint="$(unescape_mount "$mpoint")"
 	if [ "$mpoint" != "/target/boot" ] && [ "$mpoint" != "/target" ] && [ "$mpoint" != "/" ]; then
 		type="$(echo "$mrecord" | head -n1 | cut -d ' ' -f 3)"
-		if ! grep -q " $mpoint/boot " "$OS_PROBER_TMP/mounted-map"; then
+		if ! bootrecord="$(grep -q " $mpoint/boot " "$OS_PROBER_TMP/mounted-map")"; then
 			linux_mount_boot "$partition" "$mpoint" "$subvolid"
 			set -- $mountboot
 			bootpart="$1"
 			bootmounted="$2"
+			bootsubvolid="$3"
 		else
 			bootpart="$partition"
 			bootmounted=0
+			bootsubvolid="$(echo "$bootrecord" | head -n1 | cut -d ' ' -f 4)"
 		fi
 		for test in /usr/lib/linux-boot-probes/mounted/*; do
 			if [ -f $test ] && [ -x $test ]; then
 				debug "running $test on mounted $partition"
-				if $test "$partition" "$bootpart" "$mpoint" "$type" "$subvolid"; then
+				if $test "$partition" "$bootpart" "$mpoint" "$type" "$subvolid" "$bootsubvolid"; then
 					debug "$test succeeded"
 					break
 				fi
