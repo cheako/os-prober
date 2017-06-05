@@ -204,6 +204,11 @@ find_uuid () {
 	fi
 }
 
+get_default_subvolid () {
+	btrfs subvolume get-default "$1" 2>/dev/null |
+	cut -d ' ' -f 2 | head -n1
+}
+
 # Sets $mountboot as output variables.  This is very messy, but POSIX shell
 # isn't really up to the task of doing it more cleanly.
 linux_mount_boot () {
