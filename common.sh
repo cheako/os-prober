@@ -151,7 +151,8 @@ parse_proc_mounts () {
 		set -f
 		set -- $line
 		set +f
-		printf '%s %s %s\n' "$(mapdevfs "$1")" "$2" "$3"
+		printf '%s %s %s %s\n' "$(mapdevfs "$1")" "$2" "$3" "$(
+		echo "$4" | grep -o 'subvolid=[0-9][0-9]*' | cut -d= -f2)"
 	done
 }
 
@@ -202,6 +203,11 @@ find_uuid () {
 	else
 		return 1
 	fi
+}
+
+get_default_subvolid () {
+	btrfs subvolume get-default "$1" 2>/dev/null |
+	cut -d ' ' -f 2 | head -n1
 }
 
 # Sets $mountboot as output variables.  This is very messy, but POSIX shell
