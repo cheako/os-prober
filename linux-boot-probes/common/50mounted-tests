@@ -67,11 +67,12 @@ if [ "$mounted" ]; then
 	set -- $mountboot
 	bootpart="$1"
 	bootmounted="$2"
+	bootsubvolid="$3"
 
 	for test in /usr/lib/linux-boot-probes/mounted/*; do
 		if [ -f "$test" ] && [ -x "$test" ]; then
 			debug "running $test $partition $bootpart $tmpmnt $type"
-			if $test "$partition" "$bootpart" "$tmpmnt" "$type" "$subvolid"; then
+			if $test "$partition" "$bootpart" "$tmpmnt" "$type" "$subvolid" "$bootsubvolid"; then
 				debug "$test succeeded"
 				do_unmount
 				exit 0

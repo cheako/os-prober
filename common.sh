@@ -253,6 +253,42 @@ linux_mount_boot () {
 			shift
 			set -- "$(mapdevfs "$tmppart")" "$@"
 
+			if bootsubvolid="$(echo "$4" | grep -o 'subvolid=[0-9][0-9]*')"; then
+				bootsubvolid="$(echo "$bootsubvolid" | cut -d= -f2-)"
+				if mount -o "subvolid=$bootsubvolid" "$1" "$tmpmnt/boot"; then
+					if [ "$bootsubvolid" = "$(get_default_subvolid "$tmpmnt/boot")" ]; then
+						mountboot="$1 1"
+						return
+					else
+						mountboot="$1 1 $bootsubvolid"
+						return
+					fi
+				else
+					debug "failed to subvolid-mount $1 onto $tmpmnt/boot"
+					mountboot="$1 0 $bootsubvolid"
+					return
+				fi
+			else
+				if bootsubvol="$(echo "$4" | grep -o 'subvol=[^,]*')"; then
+					bootsubvol="$(echo "$bootsubvol" | cut -d= -f2-)"
+					bootsubvol="${bootsubvol#/}"
+					if mount -o "subvol=${bootsubvol:=/}" "$1" "$tmpmnt/boot"; then
+						bootsubvolid="$(grep "^/dev/" /proc/mounts | parse_proc_mounts | grep " $tmpmnt/boot " | cut -d ' ' -f 4)"
+						if [ "$bootsubvolid" = "$(get_default_subvolid "$tmpmnt/boot")" ]; then
+							mountboot="$1 1"
+							return
+						else
+							mountboot="$1 1 ${bootsubvolid:-@$bootsubvol}"
+							return
+						fi
+					else
+						debug "failed to subvol-mount $1 onto $tmpmnt/boot"
+						mountboot="$1 0 @$bootsubvol"
+						return
+					fi
+				fi
+			fi
+
 			if grep -q "^$1 " "$OS_PROBER_TMP/mounted-map"; then
 				bindfrom="$(grep "^$1 " "$OS_PROBER_TMP/mounted-map" | head -n1 | cut -d " " -f 2)"
 				bindfrom="$(unescape_mount "$bindfrom")"
