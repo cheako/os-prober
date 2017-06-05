@@ -45,6 +45,16 @@ partitions () {
 			fi
 		done
 
+		# bcahce
+		for part in /sys/block/bcache*; do
+			if [ -f "$part/inflight" ]; then
+				name="$(echo "${part##*/}" | sed 's,[!.],/,g')"
+				if [ -e "/dev/$name" ]; then
+					echo "/dev/$name"
+				fi
+			fi
+		done
+
 		# Add Serial ATA RAID devices
 		if type dmraid >/dev/null 2>&1 && \
 		   dmraid -s -c >/dev/null 2>&1; then
