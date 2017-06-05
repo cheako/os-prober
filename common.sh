@@ -151,7 +151,8 @@ parse_proc_mounts () {
 		set -f
 		set -- $line
 		set +f
-		printf '%s %s %s\n' "$(mapdevfs "$1")" "$2" "$3"
+		printf '%s %s %s %s\n' "$(mapdevfs "$1")" "$2" "$3" "$(
+		echo "$4" | grep -o 'subvolid=[0-9][0-9]*' | cut -d= -f2)"
 	done
 }
 
@@ -165,7 +166,7 @@ parsefstab () {
 				set -f
 				set -- $line
 				set +f
-				printf '%s %s %s\n' "$1" "$2" "$3"
+				printf '%s %s %s %s\n' "$1" "$2" "$3" "$4"
 			;;
 		esac
 	done
@@ -204,11 +205,17 @@ find_uuid () {
 	fi
 }
 
+get_default_subvolid () {
+	btrfs subvolume get-default "$1" 2>/dev/null |
+	cut -d ' ' -f 2 | head -n1
+}
+
 # Sets $mountboot as output variables.  This is very messy, but POSIX shell
 # isn't really up to the task of doing it more cleanly.
 linux_mount_boot () {
 	partition="$1"
 	tmpmnt="$2"
+	subvolid="$3"
 
 	bootpart=""
 	mounted=""
@@ -246,6 +253,42 @@ linux_mount_boot () {
 			fi
 			shift
 			set -- "$(mapdevfs "$tmppart")" "$@"
+
+			if bootsubvolid="$(echo "$4" | grep -o 'subvolid=[0-9][0-9]*')"; then
+				bootsubvolid="$(echo "$bootsubvolid" | cut -d= -f2-)"
+				if mount -o "subvolid=$bootsubvolid" "$1" "$tmpmnt/boot"; then
+					if [ "$bootsubvolid" = "$(get_default_subvolid "$tmpmnt/boot")" ]; then
+						mountboot="$1 1"
+						return
+					else
+						mountboot="$1 1 $bootsubvolid"
+						return
+					fi
+				else
+					debug "failed to subvolid-mount $1 onto $tmpmnt/boot"
+					mountboot="$1 0 $bootsubvolid"
+					return
+				fi
+			else
+				if bootsubvol="$(echo "$4" | grep -o 'subvol=[^,]*')"; then
+					bootsubvol="$(echo "$bootsubvol" | cut -d= -f2-)"
+					bootsubvol="${bootsubvol#/}"
+					if mount -o "subvol=${bootsubvol:=/}" "$1" "$tmpmnt/boot"; then
+						bootsubvolid="$(grep "^/dev/" /proc/mounts | parse_proc_mounts | grep " $tmpmnt/boot " | cut -d ' ' -f 4)"
+						if [ "$bootsubvolid" = "$(get_default_subvolid "$tmpmnt/boot")" ]; then
+							mountboot="$1 1"
+							return
+						else
+							mountboot="$1 1 ${bootsubvolid:-@$bootsubvol}"
+							return
+						fi
+					else
+						debug "failed to subvol-mount $1 onto $tmpmnt/boot"
+						mountboot="$1 0 @$bootsubvol"
+						return
+					fi
+				fi
+			fi
 
 			if grep -q "^$1 " "$OS_PROBER_TMP/mounted-map"; then
 				bindfrom="$(grep "^$1 " "$OS_PROBER_TMP/mounted-map" | head -n1 | cut -d " " -f 2)"
