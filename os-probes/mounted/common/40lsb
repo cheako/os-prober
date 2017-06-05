@@ -7,6 +7,7 @@ set -e
 partition="$1"
 dir="$2"
 type="$3"
+subvolid="$4"
 
 lsb_field () {
 	file="$1"
@@ -44,5 +45,5 @@ if [ -z "$short" ]; then
 fi
 
 label="$(count_next_label "$short")"
-result "$partition:$long:$label:linux"
+result "$partition${subvolid:+@$subvolid}:$long:$label:linux${subvolid:+-subvolid}"
 exit 0
