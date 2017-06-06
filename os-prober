@@ -30,6 +30,25 @@ on_sataraid () {
 }
 
 partitions () {
+	_partitions "$@" |
+	while read part; do
+		uuid=$(blkid -o value -s UUID $part)
+		type=$(fs_type $part)
+		if [ "$uuid" ]; then
+			if echo "$vols" | grep -q "$uuid $type"; then
+				if [ "$type" = "btrfs" ]; then
+					continue
+				else
+					warn "Duplicate UUID unexpected on $part"
+				fi
+			fi
+			vols="$vols $uuid $type"
+		fi
+		echo $part
+	done
+}
+
+_partitions () {
 	os_name="$(uname -s)"
 	# Exclude partitions that have whole_disk sysfs attribute set.
 	if [ -d /sys/block ]; then
@@ -146,6 +165,60 @@ for partition in $(partitions); do
 	# Skip partitions used as active swap
 	if grep -q "^$mapped " "$OS_PROBER_TMP/swaps-map" ; then
 		debug "$partition: is active swap"
+		continue
+	fi
+
+	# Scan btrfs subvol(s)
+	type=$(fs_type $part)
+	if [ "$type" = "btrfs" ] && type btrfs >/dev/null 2>&1; then
+		tmpmnt=/var/lib/os-prober/mnt
+		if [ ! -d "$tmpmnt" ]; then
+			mkdir "$tmpmnt"
+		fi
+		# any fs supporting subvol has no fear of multi-mount
+		mount $partition "$tmpmnt"
+		# 5 is special for btrfs and not listed as a subvol
+		subvols=$(echo 5; btrfs subvolume list "$tmpmnt" | cut -d ' ' -f 2)
+		rosubvols=$(btrfs subvolume list -r "$tmpmnt" | cut -d ' ' -f 2)
+		sssubvols=$(btrfs subvolume list -s "$tmpmnt" | cut -d ' ' -f 2)
+		defaultsv=$(btrfs subvolume get-default "$tmpmnt" | cut -d ' ' -f 2)
+		umount "$tmpmnt"
+		for subvol in $subvols; do
+			if echo "$rosubvols" | grep -q -x "$subvol"; then
+				continue
+			fi
+			if echo "$sssubvols" | grep -q -x "$subvol"; then
+				continue
+			fi
+			if [ "$defaultsv" = "$subvol" ]; then
+				mount $partition "$tmpmnt"
+				for test in /usr/lib/os-probes/mounted/*; do
+					if [ -f "$test" ] && [ -x "$test" ]; then
+						debug "running $test on $partition"
+						if "$test" "$partition" "$tmpmnt" "$type" "$subvol"; then
+							debug "os detected by $test"
+							umount "$tmpmnt"
+							break
+						fi
+					fi
+				done
+				umount "$tmpmnt"
+				continue
+			fi
+			mount -o "subvolid=$subvol" $partition "$tmpmnt"
+			for test in /usr/lib/os-probes/mounted/*; do
+				if [ -f "$test" ] && [ -x "$test" ]; then
+					debug "running $test on $partition"
+					if "$test" "$partition" "$tmpmnt" "$type" "$subvol"; then
+						debug "os detected by $test"
+						umount "$tmpmnt"
+						break
+					fi
+				fi
+			done
+			umount "$tmpmnt"
+		done
+		rmdir "$tmpmnt"
 		continue
 	fi
 
