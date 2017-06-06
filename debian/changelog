@@ -1,3 +1,12 @@
+os-prober (1.76) unstable; urgency=medium
+
+  * Add in bcache devices (Closes: #864246)
+  * Squelch btrfs devices with duplicate uuid
+  * Iterate over and insert, subvol, into output
+  * Handle subvol during boot probe (Closes: #688336)
+
+ -- Mike Mestnik <cheako+apt_repo@mikemestnik.net>  Tue, 06 Jun 2017 17:08:05 -0500
+
 os-prober (1.75) unstable; urgency=medium
 
   * Remove code using device mapper (Closes: #860833, #853927, #853163).
