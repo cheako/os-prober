@@ -1,3 +1,13 @@
+os-prober (1.75~cheako1) unstable; urgency=medium
+ 
+  * Add in bcache devices (Closes: #864246)
+  * Process filesystem raid entries
+  * Iterate over and insert, subvol, into output (Closes: #688336)
+  * Handle subvol during boot probe
+  * Pass subvol data for /boot to bootloadter(s)
+
+ -- Mike Mestnik <cheako+apt_repo@mikemestnik.net>  Fri, 09 Jun 2017 16:20:31 -0500
+
 os-prober (1.75) unstable; urgency=medium
 
   * Remove code using device mapper (Closes: #860833, #853927, #853163).
