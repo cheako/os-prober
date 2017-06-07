@@ -6,6 +6,7 @@ partition="$1"
 bootpart="$2"
 mpoint="$3"
 type="$4"
+subvolid="$5"
 
 found_item=0
 
@@ -37,7 +38,7 @@ recordstanza () {
 					parameters="root=$rootdev $parameters"
 				fi
 				parameters="${parameters% }"
-				result "$rootpart:$bootpart:$title:$kernel:$initrd:$parameters"
+				result "$rootpart:$bootpart:$title:$kernel:$initrd:$parameters${subvolid:+ rootflags=subvolid=$subvolid}"
 				found_item=1
 			else
 				debug "cannot find $initrd, not recording"

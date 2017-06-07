@@ -151,7 +151,8 @@ parse_proc_mounts () {
 		set -f
 		set -- $line
 		set +f
-		printf '%s %s %s\n' "$(mapdevfs "$1")" "$2" "$3"
+		printf '%s %s %s %s\n' "$(mapdevfs "$1")" "$2" "$3" "$(
+		echo "$4" | grep -o 'subvolid=[0-9][0-9]*' | cut -d= -f2)"
 	done
 }
 
@@ -165,7 +166,7 @@ parsefstab () {
 				set -f
 				set -- $line
 				set +f
-				printf '%s %s %s\n' "$1" "$2" "$3"
+				printf '%s %s %s %s\n' "$1" "$2" "$3" "$4"
 			;;
 		esac
 	done

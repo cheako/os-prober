@@ -6,6 +6,7 @@ partition="$1"
 bootpart="$2"
 mpoint="$3"
 type="$4"
+subvolid="$5"
 
 found_item=0
 
@@ -13,7 +14,7 @@ entry_result () {
 	if [ "$ignore_item" = 0 ] && \
 	   [ -n "$kernel" ] && \
 	   [ -e "$mpoint/$kernel" ]; then
-		result "$rootpart:$bootpart:$title:$kernel:$initrd:$parameters"
+		result "$rootpart:$bootpart:$title:$kernel:$initrd:$parameters${subvolid:+ rootflags=subvolid=$subvolid}"
 		found_item=1
 	fi
 	kernel=""
