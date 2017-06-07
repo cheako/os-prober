@@ -7,7 +7,6 @@ set -e
 partition="$1"
 dir="$2"
 type="$3"
-subvolid="$4"
 
 # This test is inaccurate, but given separate / and /boot partitions and the
 # fact that only some architectures have ld-linux.so, I can't see anything
@@ -144,7 +143,7 @@ if (ls "$dir"/lib*/ld*.so* && [ -d "$dir/boot" ] || ls "$dir"/usr/lib*/ld*.so*) 
 	fi
 	
         label="$(count_next_label "$short")"
-	result "$partition${subvolid:+@$subvolid}:$long:$label:linux${subvolid:+-subvolid}"
+	result "$partition:$long:$label:linux"
 	exit 0
 else
 	exit 1
