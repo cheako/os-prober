@@ -166,7 +166,7 @@ parsefstab () {
 				set -f
 				set -- $line
 				set +f
-				printf '%s %s %s\n' "$1" "$2" "$3"
+				printf '%s %s %s %s\n' "$1" "$2" "$3" "$4"
 			;;
 		esac
 	done
