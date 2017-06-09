@@ -146,12 +146,22 @@ is_dos_extended_partition() {
 	return 1
 }
 
+canonical_dev () {
+	local dev=${1#/dev/}
+	local sys=$(find /sys/fs/btrfs -path \*/devices/$dev)
+	if [ -e $sys ]
+		echo /dev/$(ls ${sys%/$dev} | head -n1)
+	else
+		echo $1
+	fi
+}
+
 parse_proc_mounts () {
 	while read -r line; do
 		set -f
 		set -- $line
 		set +f
-		printf '%s %s %s\n' "$(mapdevfs "$1")" "$2" "$3"
+		printf '%s %s %s\n' "$(canonical_dev $(mapdevfs "$1"))" "$2" "$3"
 	done
 }
 
@@ -245,7 +255,7 @@ linux_mount_boot () {
 				fi
 			fi
 			shift
-			set -- "$(mapdevfs "$tmppart")" "$@"
+			set -- "$(canonical_dev $(mapdevfs "$tmppart"))" "$@"
 
 			if grep -q "^$1 " "$OS_PROBER_TMP/mounted-map"; then
 				bindfrom="$(grep "^$1 " "$OS_PROBER_TMP/mounted-map" | head -n1 | cut -d " " -f 2)"
