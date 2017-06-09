@@ -146,12 +146,22 @@ is_dos_extended_partition() {
 	return 1
 }
 
+canonical_dev () {
+	local dev=${1#/dev/}
+	local sys=$(find /sys/fs/btrfs -path \*/devices/$dev)
+	if [ -e $sys ]
+		echo /dev/$(ls ${sys%/$dev} | head -n1)
+	else
+		echo $1
+	fi
+}
+
 parse_proc_mounts () {
 	while read -r line; do
 		set -f
 		set -- $line
 		set +f
-		printf '%s %s %s %s\n' "$(mapdevfs "$1")" "$2" "$3" "$(
+		printf '%s %s %s %s\n' "$(canonical_dev $(mapdevfs "$1"))" "$2" "$3" "$(
 		echo "$4" | grep -o 'subvolid=[0-9][0-9]*' | cut -d= -f2)"
 	done
 }
@@ -251,7 +261,7 @@ linux_mount_boot () {
 				fi
 			fi
 			shift
-			set -- "$(mapdevfs "$tmppart")" "$@"
+			set -- "$(canonical_dev $(mapdevfs "$tmppart"))" "$@"
 
 			if bootsubvolid="$(echo "$4" | grep -o 'subvolid=[0-9][0-9]*')"; then
 				bootsubvolid="$(echo "$bootsubvolid" | cut -d= -f2-)"
