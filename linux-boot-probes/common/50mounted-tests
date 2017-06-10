@@ -14,6 +14,7 @@ do_unmount() {
 }
 
 partition="$1"
+subvolid="$2"
 
 types="$(fs_type "$partition")"
 if [ "$types" = NOT-DETECTED ]; then
@@ -51,6 +52,10 @@ if [ ! -d "$tmpmnt" ]; then
 fi
 
 mounted=
+if [ "$subvolid" ]; then
+	mount "$partition" "$tmpmnt" -o subvolid="$subvolid" &&
+		mounted=1
+else
 if type grub-mount >/dev/null 2>&1 && \
    type grub-probe >/dev/null 2>&1 && \
    grub-mount "$partition" "$tmpmnt" 2>/dev/null; then
@@ -58,16 +63,19 @@ if type grub-mount >/dev/null 2>&1 && \
 	type="$(grub-probe -d "$partition" -t fs)"
 	[ "$type" ] || type=fuseblk
 fi
+fi
 
 if [ "$mounted" ]; then
-	linux_mount_boot "$partition" "$tmpmnt"
-	bootpart="${mountboot%% *}"
-	mounted="${mountboot#* }"
+	linux_mount_boot "$partition" "$tmpmnt" "$subvolid"
+	set -- $mountboot
+	bootpart="$1"
+	bootmounted="$2"
+	bootsubvolid="$3"
 
 	for test in /usr/lib/linux-boot-probes/mounted/*; do
 		if [ -f "$test" ] && [ -x "$test" ]; then
 			debug "running $test $partition $bootpart $tmpmnt $type"
-			if $test "$partition" "$bootpart" "$tmpmnt" "$type"; then
+			if $test "$partition" "$bootpart" "$tmpmnt" "$type" "$subvolid" "$bootsubvolid"; then
 				debug "$test succeeded"
 				do_unmount
 				exit 0

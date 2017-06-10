@@ -2,6 +2,7 @@
 # Sub-tests that require a mounted partition.
 set -e
 partition="$1"
+subvolid="$2"
 
 . /usr/share/os-prober/common.sh
 
@@ -61,6 +62,10 @@ if [ ! -d "$tmpmnt" ]; then
 fi
 
 mounted=
+if [ "$subvolid" ]; then
+        mount "$partition" "$tmpmnt" -o subvolid="$subvolid" &&
+                mounted=1
+else
 if type grub-mount >/dev/null 2>&1 && \
    type grub-probe >/dev/null 2>&1 && \
    grub-mount "$partition" "$tmpmnt" 2>/dev/null; then
@@ -73,12 +78,13 @@ if type grub-mount >/dev/null 2>&1 && \
 		type=fuseblk
 	fi
 fi
+fi
 
 if [ "$mounted" ]; then
 	for test in /usr/lib/os-probes/mounted/*; do
 		debug "running subtest $test"
 		if [ -f "$test" ] && [ -x "$test" ]; then
-			if "$test" "$partition" "$tmpmnt" "$type"; then
+			if "$test" "$partition" "$tmpmnt" "$type" "$subvolid"; then
 				debug "os found by subtest $test"
 				do_unmount
 				exit 0
