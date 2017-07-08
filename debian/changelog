@@ -1,3 +1,9 @@
+os-prober (1.75+cheako0) unstable; urgency=medium
+
+  * C code to parse Apple's plist.
+
+ -- Mike Mestnik <cheako+apt_repo@mikemestnik.net>  Sat, 08 Jul 2017 10:49:50 -0500
+
 os-prober (1.75) unstable; urgency=medium
 
   * Remove code using device mapper (Closes: #860833, #853927, #853163).

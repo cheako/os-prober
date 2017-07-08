@@ -23,7 +23,22 @@ esac
 # but I don't think it exists on Mac OS <= 9, and it's XML so parsing in
 # shell will be nasty.
 
-if [ -e "$2/mach_kernel" ]; then
+if [ -r "$2/System/Library/CoreServices/SystemVersion.plist" ]; then
+  label="$(count_next_label MacOSX)"
+  plist="$(plist2strings "$2/System/Library/CoreServices/SystemVersion.plist")"
+  build="$(echo "$plist" | cut -f1)"
+  name="$(echo "$plist" | cut -f2)"
+  version="$(echo "$plist" | cut -f3)"
+  [ -e "$2/mach_kernel" ] && : ${name:=Mac OS X}
+  [ "$name" ] || exit 1
+  if [ "$version" ]; then
+    description="$name ($version${build:+"!$build"})"
+  else
+    description="$name${build:+" $build"}"
+  fi
+  result "$1:$description:$label:macosx"
+  exit 0
+elif [ -e "$2/mach_kernel" ]; then
   label="$(count_next_label MacOSX)"
   result "$1:Mac OS X:$label:macosx"
   exit 0

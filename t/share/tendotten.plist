@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- https://gist.github.com/narnars0/8dc13dd3907e95a5de0d -->
+<plist version="1.0">
+<dict>
+        <key>ProductBuildVersion</key>
+        <string>14B25</string>
+        <key>ProductCopyright</key>
+        <string>1983-2014 Apple Inc.</string>
+        <key>ProductName</key>
+        <string>Mac OS X</string>
+        <key>ProductUserVisibleVersion</key>
+        <string>10.10.1</string>
+        <key>ProductVersion</key>
+        <string>10.10.1</string>
+</dict>
+</plist>
